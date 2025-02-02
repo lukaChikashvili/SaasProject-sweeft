@@ -11,5 +11,10 @@ router.get("/auth/activate/:token", AuthController.activateAccount);
 
 // update company details
 router.put("/auth/update", authenticate, UserController.updateUserDetails);
+// see company current subscription
+router.get("/subscription", authenticate, UserController.viewSubscriptionPlan);
+// update subscription plan
+router.put('/subscription/update', authenticate, UserController.changeSubscriptionPlan );
+
 
 export default router;

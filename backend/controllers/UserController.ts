@@ -60,54 +60,103 @@ class UserController {
         }
         }
 
-        // subscription rules
-        static async uploadFile(companyId: number, file: File) {
-            const company = await prisma.company.findUnique({
-                where: {
-                    id: companyId
-                }
-            });
-
-            if (!company) {
-                throw new Error('Company not found');
-              }
-
-
-            switch(company.subscriptionPlan) {
-                case 'FREE':
-                    if(company.filesProcessed >= 10) {
-                        throw new Error('File limit exceeded free plan');
-                    }
-                break;
+        static async viewSubscriptionPlan(req: Request, res: Response) {
+            try {
+                const { id } = req.user!;
                 
-                case 'BASIC':
-                    if(company.filesProcessed >= 100) {
-                        throw new Error('File limit exceeded basic plan');
+                
+                const company = await prisma.company.findUnique({
+                    where: { id },
+                    select: {
+                        subscriptionPlan: true,
+                        filesProcessed: true,
+                        usersCount: true,
+                        additionalCost: true,
                     }
-
-                    break;
-
-                case 'PREMIUM':
-                    if(company.filesProcessed >= 1000) {
-                        company.additionalCost += 0.5;
-                    }
-                    
-                    break;
-
-                    default:
-                       throw new Error('Invalid subscription plan');
+                });
+    
+                if (!company) {
+                    return res.status(404).json({ message: 'Company not found.' });
+                }
+    
+                return res.status(200).json({ subscription: company });
+            } catch (error) {
+                console.error(error);
+                return res.status(500).json({ message: 'Error retrieving subscription plan.' });
             }
-
-            await prisma.company.update({
-                where: { id: companyId },
-                data: {
-                  filesProcessed: company.filesProcessed + 1,
-                  additionalCost: company.additionalCost,
-                },
-
-            })
-            
         }
+
+
+        // update subscription plan
+        static async changeSubscriptionPlan(req: Request, res: Response) {
+            try {
+                
+               const { id } = req.user!;
+               const { newPlan } = req.body;
+
+               const company = await prisma.company.findUnique({
+                where: {id},
+               });
+
+               if(!company) {
+                return res.status(404).json({ message: 'Company not found.' });
+               }
+
+               // subscription rules
+               let newFilesProcessed = company.filesProcessed;
+               let newUsersCount = company.usersCount;
+               let newAdditionalCost = company.additionalCost;
+
+               if(newPlan === 'FREE') {
+                 if(company.subscriptionPlan === 'FREE') {
+                    return res.status(400).json({ message: 'You are already on the Free plan.' });
+                 }
+
+                 newFilesProcessed = 0;
+                newUsersCount = 1;  
+                newAdditionalCost = 0;
+               }
+
+               if(newPlan === 'BASIC') {
+                if(company.subscriptionPlan === 'BASIC') {
+                    return res.status(400).json({ message: 'You are already on the Basic plan.' });
+                }
+
+                newFilesProcessed = Math.min(company.filesProcessed, 100);
+                newUsersCount = Math.min(company.usersCount, 10);
+
+               }
+
+               if(newPlan === 'PREMIUM') {
+                if(company.subscriptionPlan === 'PREMIUM') {
+                    return res.status(400).json({ message: 'You are already on the Premium plan.' });
+                }
+
+                newFilesProcessed = Math.min(company.filesProcessed, 1000); 
+                newUsersCount = company.usersCount; 
+                newAdditionalCost = company.filesProcessed > 1000 ? (company.filesProcessed - 1000) * 0.5 : 0;
+               }
+
+               // update in database
+               const updatedCompany = await prisma.company.update({
+                where: { id },
+                data: {
+                    subscriptionPlan: newPlan,
+                    filesProcessed: newFilesProcessed,
+                    usersCount: newUsersCount,
+                    additionalCost: newAdditionalCost,
+                },
+               });
+
+               return res.status(200).json({ message: 'Subscription plan updated successfully.', company: updatedCompany });
+
+
+ 
+            } catch (error) {
+                return res.status(500).json({ message: 'An error occurred while changing the subscription plan.' });
+            }
+        }
+    
     }
 
 
