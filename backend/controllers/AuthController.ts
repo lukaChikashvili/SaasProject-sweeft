@@ -1,6 +1,6 @@
-import { Request, Response } from "express";
+import { Request, Response, NextFunction } from "express";
 import prisma from "../db/db.config.js";
-import vine, {errors} from "@vinejs/vine";
+import vine from "@vinejs/vine";
 import { registerSchema } from "../validations/authValidation.js";
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
@@ -9,7 +9,7 @@ import jwt from 'jsonwebtoken'
 
 
 class AuthController {
-  static async register(req: Request, res: Response) {
+    static async register(req: Request, res: Response, next: NextFunction): Promise<Response | void>{
     try {
          
         const body = req.body;
@@ -43,7 +43,7 @@ class AuthController {
         );
          
 
-        const activationLink = `${process.env.PORT}/api/auth/activate/${activationToken}`;
+        const activationLink = `http://localhost:3000/api/auth/activate/${activationToken}`;
 
         return res.json({
             status: 200,
@@ -54,15 +54,16 @@ class AuthController {
 
 
 
-    } catch (error) {
-        if (error instanceof errors.E_VALIDATION_ERROR) {
-            return res.status(400).json({ errors: error.messages });
+    } catch (error: any) {
+        if (error.messages) {
+   
+          return res.status(400).json({ errors: error.messages });
         }
-
-        return res.status(500).json({ message: "Internal Server Error" });
+  
+        next(error);
     }
-  }
+}
 }
 
 
-export default AuthController
+export default AuthController;
