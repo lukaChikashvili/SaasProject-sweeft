@@ -1,9 +1,11 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import prisma from "../db/db.config.js";
-
+import jwt from 'jsonwebtoken'
 import vine, { errors } from "@vinejs/vine";
 import { updateUserSchema } from "../validations/authValidation.js";
+import { sendEmail } from "../mail/mail.js";
+
 
 class UserController {
     static async updateUserDetails(req: Request, res: Response) {
@@ -112,7 +114,7 @@ class UserController {
                     return res.status(400).json({ message: 'You are already on the Free plan.' });
                  }
 
-                 newFilesProcessed = 0;
+                newFilesProcessed = Math.min(company.filesProcessed, 10);
                 newUsersCount = 1;  
                 newAdditionalCost = 0;
                }
@@ -124,6 +126,7 @@ class UserController {
 
                 newFilesProcessed = Math.min(company.filesProcessed, 100);
                 newUsersCount = Math.min(company.usersCount, 10);
+                newAdditionalCost = Math.max(0, company.usersCount - 1) * 5;
 
                }
 
@@ -132,9 +135,11 @@ class UserController {
                     return res.status(400).json({ message: 'You are already on the Premium plan.' });
                 }
 
-                newFilesProcessed = Math.min(company.filesProcessed, 1000); 
-                newUsersCount = company.usersCount; 
-                newAdditionalCost = company.filesProcessed > 1000 ? (company.filesProcessed - 1000) * 0.5 : 0;
+                newFilesProcessed = Math.min(company.filesProcessed, 1000);
+            newUsersCount = company.usersCount;
+            newAdditionalCost = company.filesProcessed > 1000 ? (company.filesProcessed - 1000) * 0.5 : 0;
+               
+        
                }
 
                // update in database
@@ -154,6 +159,72 @@ class UserController {
  
             } catch (error) {
                 return res.status(500).json({ message: 'An error occurred while changing the subscription plan.' });
+            }
+        }
+
+
+        // add users
+        static async addEmployee(req:Request, res: Response) {
+            try {
+
+                const { email, name, role } = req.body;
+                
+                const { id } = req.user!;
+
+                const companyUser = await prisma.user.findUnique({
+                    where: {id},
+                    select: {role: true, companyId: true},
+                });
+
+                if (!companyUser || !companyUser.companyId) {
+                    return res.status(403).json({ message: 'You are not authorized to add employees because you are not part of a company.' });
+                }
+
+                if (role && companyUser.role !== 'ADMIN') {
+                    return res.status(403).json({ message: 'Only an admin can create another admin.' });
+                }
+
+                const existingEmployee = await prisma.user.findUnique({
+                    where: { email },
+                });
+
+                if (existingEmployee) {
+                    return res.status(400).json({ message: 'Employee with this email already exists.' });
+                }
+
+                // add user to database
+                const newEmployee = await prisma.user.create({
+                    data: {
+                        email,
+                        name,
+                        companyId: companyUser.companyId, 
+                        role: role ? 'ADMIN' : 'EMPLOYEE',  
+                        status: 'PENDING',
+                    },
+                });
+
+
+                const activationToken = jwt.sign(
+                    { id: newEmployee.id, email: newEmployee.email },
+                    process.env.JWT_SECRET as string,
+                    { expiresIn: "1d" }
+                );
+
+                const activationLink = `http://localhost:5000/api/auth/activate/${activationToken}`;
+                
+                await sendEmail({
+                    toMail: newEmployee.email,
+                    subject: "Activate Your Account",
+                    body: `<h1>Click <a href="${activationLink}">here</a> to activate your account.</h1>`,
+                });
+
+                return res.status(201).json({ message: "Employee added successfully. Please check the employee's email to activate their account." });
+
+
+            } catch (error) {
+                console.log(error)
+                return res.status(500).json({ message: "An error occurred while adding the employee." });
+
             }
         }
     

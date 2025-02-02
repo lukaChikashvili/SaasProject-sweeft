@@ -21,18 +21,33 @@ enum SubscriptionPlan {
 
 // company schema
 model Company {
-  id          Int        @id @default(autoincrement())
-  name        String     @unique
-  email       String     @unique
-  password    String     
-  country       String
-  industry      String
-  isActive      Boolean     @default(false)
-  activationToken String?   @unique
-  subscriptionPlan  SubscriptionPlan   @default(FREE)
-  filesProcessed   Int              @default(0)   
-  usersCount       Int              @default(1)  
-  additionalCost   Float            @default(0.0) 
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id              Int        @id @default(autoincrement())
+  name            String     @unique
+  email           String     @unique
+  password        String     
+  country         String
+  industry        String
+  isActive        Boolean    @default(false)
+  activationToken String?    @unique
+  subscriptionPlan SubscriptionPlan @default(FREE)
+  filesProcessed  Int        @default(0)   
+  usersCount      Int        @default(1)  
+  additionalCost  Float      @default(0.0) 
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  users           User[]     @relation("CompanyUsers")
+}
+
+// user model
+model User {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  name        String   
+  password    String?
+  role        String   @default("EMPLOYEE") 
+  status      String   @default("PENDING") 
+  companyId   Int
+  company     Company  @relation("CompanyUsers", fields: [companyId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

@@ -15,6 +15,7 @@ router.put("/auth/update", authenticate, UserController.updateUserDetails);
 router.get("/subscription", authenticate, UserController.viewSubscriptionPlan);
 // update subscription plan
 router.put('/subscription/update', authenticate, UserController.changeSubscriptionPlan );
-
+// add users
+router.post('/users', authenticate,  UserController.addEmployee);
 
 export default router;
