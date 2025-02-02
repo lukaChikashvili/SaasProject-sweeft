@@ -13,6 +13,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PREMIUM
+}
+
 // company schema
 model Company {
   id          Int        @id @default(autoincrement())
@@ -23,6 +29,10 @@ model Company {
   industry      String
   isActive      Boolean     @default(false)
   activationToken String?   @unique
+  subscriptionPlan  SubscriptionPlan   @default(FREE)
+  filesProcessed   Int              @default(0)   
+  usersCount       Int              @default(1)  
+  additionalCost   Float            @default(0.0) 
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 }

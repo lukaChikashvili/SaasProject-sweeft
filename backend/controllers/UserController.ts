@@ -59,6 +59,55 @@ class UserController {
             return res.status(500).json({ message: "An error occurred while updating user details." });
         }
         }
+
+        // subscription rules
+        static async uploadFile(companyId: number, file: File) {
+            const company = await prisma.company.findUnique({
+                where: {
+                    id: companyId
+                }
+            });
+
+            if (!company) {
+                throw new Error('Company not found');
+              }
+
+
+            switch(company.subscriptionPlan) {
+                case 'FREE':
+                    if(company.filesProcessed >= 10) {
+                        throw new Error('File limit exceeded free plan');
+                    }
+                break;
+                
+                case 'BASIC':
+                    if(company.filesProcessed >= 100) {
+                        throw new Error('File limit exceeded basic plan');
+                    }
+
+                    break;
+
+                case 'PREMIUM':
+                    if(company.filesProcessed >= 1000) {
+                        company.additionalCost += 0.5;
+                    }
+                    
+                    break;
+
+                    default:
+                       throw new Error('Invalid subscription plan');
+            }
+
+            await prisma.company.update({
+                where: { id: companyId },
+                data: {
+                  filesProcessed: company.filesProcessed + 1,
+                  additionalCost: company.additionalCost,
+                },
+
+            })
+            
+        }
     }
 
 
