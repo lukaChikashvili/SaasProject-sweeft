@@ -25,4 +25,7 @@ router.delete('/users/delete/:id', authenticate, UserController.deleteUser);
 // get all users
 router.get('/allusers', authenticate, AdminController.getAllUsers);
 
+// user activation
+router.get('/user/activate/:id', UserController.userActivation);
+
 export default router;

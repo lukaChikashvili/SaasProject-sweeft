@@ -228,7 +228,7 @@ class UserController {
                 });
         
            
-                const activationLink = `http://localhost:5000/api/auth/activate/${newUser.id}`;
+                const activationLink = `http://localhost:5000/api/user/activate/${newUser.id}`;
                 await sendEmail({
                     toMail: email,  
                     subject: "Activate Your Account",
@@ -249,6 +249,40 @@ class UserController {
                 console.error(error);
                 return res.status(500).json({ message: "An error occurred while adding the employee." });
             }
+        }
+
+        // user email activation
+        static async userActivation(req:Request, res:Response) {
+              try {
+                  
+                const { id } = req.params;
+
+                const user = await prisma.user.findUnique({
+                    where: {id: Number(id)}
+                });
+
+                if(!user) {
+                    return res.status(404).json({ message: 'User not found.' });
+                }
+
+                if (user.status === 'ACTIVE') {
+                    return res.status(400).json({ message: 'User is already activated.' });
+                }
+
+                const updatedUser = await prisma.user.update({
+                    where: { id: Number(id) },
+                    data: {
+                        status: 'ACTIVE',
+                    },
+                });
+
+                return res.status(200).json({ message: 'User activated successfully.', user: updatedUser });
+                
+                
+              } catch (error) {
+                console.error(error);
+                return res.status(500).json({ message: 'An error occurred while activating the user.' });
+              }
         }
         
 
