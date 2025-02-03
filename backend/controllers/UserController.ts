@@ -164,69 +164,72 @@ class UserController {
 
 
         // add users
-        static async addEmployee(req:Request, res: Response) {
+       
+        static async addEmployee(req: Request, res: Response) {
             try {
-
-                const { email, name, role } = req.body;
+                const { email, name } = req.body;
+                const { id: companyId } = req.user!;
+        
+              
+                const company = await prisma.company.findUnique({
+                    where: { id: companyId },
+                });
+        
+                if (!company) {
+                    return res.status(404).json({ message: "Company not found." });
+                }
+        
+             
+                if (company.subscriptionPlan === "FREE" && company.usersCount >= 1) {
+                    return res.status(400).json({ message: "Free plan allows only 1 user." });
+                }
+        
+                if (company.subscriptionPlan === "BASIC" && company.usersCount >= 10) {
+                    return res.status(400).json({ message: "Basic plan allows only up to 10 users." });
+                }
+        
                 
-                const { id } = req.user!;
-
-                const companyUser = await prisma.user.findUnique({
-                    where: {id},
-                    select: {role: true, companyId: true},
-                });
-
-                if (!companyUser || !companyUser.companyId) {
-                    return res.status(403).json({ message: 'You are not authorized to add employees because you are not part of a company.' });
+                const existingUser = await prisma.user.findUnique({ where: { email } });
+        
+                if (existingUser) {
+                    return res.status(400).json({ message: "User already exists with this email." });
                 }
-
-                if (role && companyUser.role !== 'ADMIN') {
-                    return res.status(403).json({ message: 'Only an admin can create another admin.' });
-                }
-
-                const existingEmployee = await prisma.user.findUnique({
-                    where: { email },
-                });
-
-                if (existingEmployee) {
-                    return res.status(400).json({ message: 'Employee with this email already exists.' });
-                }
-
-                // add user to database
-                const newEmployee = await prisma.user.create({
+        
+              
+                const newUser = await prisma.user.create({
                     data: {
                         email,
                         name,
-                        companyId: companyUser.companyId, 
-                        role: role ? 'ADMIN' : 'EMPLOYEE',  
-                        status: 'PENDING',
+                        companyId,
+                        status: "PENDING", 
                     },
                 });
-
-
-                const activationToken = jwt.sign(
-                    { id: newEmployee.id, email: newEmployee.email },
-                    process.env.JWT_SECRET as string,
-                    { expiresIn: "1d" }
-                );
-
-                const activationLink = `http://localhost:5000/api/auth/activate/${activationToken}`;
-                
+        
+                const activationLink = `http://localhost:5000/api/auth/activate/${newUser.id}`;
+              
                 await sendEmail({
-                    toMail: newEmployee.email,
+                    toMail: company.email,
                     subject: "Activate Your Account",
-                    body: `<h1>Click <a href="${activationLink}">here</a> to activate your account.</h1>`,
+                    body: `<h1>Click <a href="${activationLink}">here</a> to activate your account.</h1>`
                 });
 
-                return res.status(201).json({ message: "Employee added successfully. Please check the employee's email to activate their account." });
-
-
+                
+                await prisma.company.update({
+                    where: { id: companyId },
+                    data: {
+                        usersCount: { increment: 1 },
+                    },
+                });
+        
+                return res.status(201).json({ message: "Employee added successfully. Activation email sent." , activationLink});
+        
             } catch (error) {
-                console.log(error)
+                console.error(error);
                 return res.status(500).json({ message: "An error occurred while adding the employee." });
-
             }
         }
+        
+        
     
     }
 
