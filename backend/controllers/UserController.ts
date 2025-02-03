@@ -170,7 +170,7 @@ class UserController {
                 const { email, name } = req.body;
                 const { id: companyId } = req.user!;
         
-              
+                
                 const company = await prisma.company.findUnique({
                     where: { id: companyId },
                 });
@@ -179,23 +179,45 @@ class UserController {
                     return res.status(404).json({ message: "Company not found." });
                 }
         
-             
-                if (company.subscriptionPlan === "FREE" && company.usersCount >= 1) {
-                    return res.status(400).json({ message: "Free plan allows only 1 user." });
-                }
-        
-                if (company.subscriptionPlan === "BASIC" && company.usersCount >= 10) {
-                    return res.status(400).json({ message: "Basic plan allows only up to 10 users." });
-                }
-        
+                const { subscriptionPlan, usersCount } = company;
+
                 
-                const existingUser = await prisma.user.findUnique({ where: { email } });
+                let maxUsers: number;
         
-                if (existingUser) {
-                    return res.status(400).json({ message: "User already exists with this email." });
+               
+                switch (subscriptionPlan) {
+                    case 'FREE':
+                        maxUsers = 1;
+                        break;
+                    case 'BASIC':
+                        maxUsers = 10;
+                        break;
+                    case 'PREMIUM':
+                        maxUsers = Infinity; 
+                        break;
+                    default:
+                        return res.status(400).json({ message: "Invalid subscription plan." });
                 }
         
               
+                if (usersCount >= maxUsers) {
+                    return res.status(400).json({ message: `You have reached the maximum number of users for the ${subscriptionPlan} plan.` });
+                }
+              
+        
+                
+                const existingUser = await prisma.user.findFirst({
+                    where: { 
+                        email, 
+                        companyId 
+                    }
+                });
+        
+                if (existingUser) {
+                    return res.status(400).json({ message: "User already exists in this company." });
+                }
+        
+                
                 const newUser = await prisma.user.create({
                     data: {
                         email,
@@ -205,14 +227,14 @@ class UserController {
                     },
                 });
         
+           
                 const activationLink = `http://localhost:5000/api/auth/activate/${newUser.id}`;
-              
                 await sendEmail({
-                    toMail: company.email,
+                    toMail: email,  
                     subject: "Activate Your Account",
                     body: `<h1>Click <a href="${activationLink}">here</a> to activate your account.</h1>`
                 });
-
+        
                 
                 await prisma.company.update({
                     where: { id: companyId },
@@ -221,11 +243,51 @@ class UserController {
                     },
                 });
         
-                return res.status(201).json({ message: "Employee added successfully. Activation email sent." , activationLink});
+                return res.status(201).json({ message: "Employee added successfully. Activation email sent.", activationLink });
         
             } catch (error) {
                 console.error(error);
                 return res.status(500).json({ message: "An error occurred while adding the employee." });
+            }
+        }
+        
+
+        // delete users
+        static async deleteUser(req:Request, res:Response) {
+            try {
+                const { id } = req.params;
+                const { id:companyId } = req.user!;
+
+                const employee = await prisma.user.findUnique({
+                    where: {
+                        id: Number(id)
+                    }
+                });
+
+                if(!employee) {
+                    return res.status(404).json({ message: "Employee not found." });
+                }
+
+                if(employee.companyId !== companyId) {
+                    return res.status(403).json({ message: "Unauthorized to delete this employee." });
+                }
+
+                // delete user
+                await prisma.user.delete({
+                    where: { id: Number(id) },
+                });
+
+                await prisma.company.update({
+                    where: { id: companyId },
+                    data: {
+                        usersCount: { decrement: 1 },
+                    },
+                });
+
+                return res.status(200).json({ message: "Employee deleted successfully." });
+            } catch (error) {
+                console.log(error);
+                return res.status(500).json({ message: "An error occurred while deleting the employee." });
             }
         }
         

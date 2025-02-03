@@ -17,5 +17,8 @@ router.get("/subscription", authenticate, UserController.viewSubscriptionPlan);
 router.put('/subscription/update', authenticate, UserController.changeSubscriptionPlan );
 // add users
 router.post('/users', authenticate,  UserController.addEmployee);
+// delete users
+router.delete('/users/delete/:id', authenticate, UserController.deleteUser);
+
 
 export default router;
