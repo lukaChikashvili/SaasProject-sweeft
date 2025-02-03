@@ -2,6 +2,7 @@ import { Router } from "express";
 import AuthController from "../controllers/AuthController.js"
 import { authenticate } from "../middlewares/authMiddleware.js";
 import UserController from "../controllers/UserController.js";
+import AdminController from "../controllers/AdminController.js";
 
 const router = Router();
 
@@ -20,5 +21,8 @@ router.post('/users', authenticate,  UserController.addEmployee);
 // delete users
 router.delete('/users/delete/:id', authenticate, UserController.deleteUser);
 
+
+// get all users
+router.get('/allusers', authenticate, AdminController.getAllUsers);
 
 export default router;
