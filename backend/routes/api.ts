@@ -35,4 +35,9 @@ const upload = multer({ dest: "uploads/" });
 // file upload
 router.post("/upload", upload.single("file"), UploadController.uploadFile);
 
+// file visibility update
+router.put("/upload/:fileId", UploadController.changeVisibility);
+
+
+
 export default router;
