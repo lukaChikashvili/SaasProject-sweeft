@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
   provider = "prisma-client-js"
@@ -19,7 +15,7 @@ enum SubscriptionPlan {
   PREMIUM
 }
 
-// company schema
+// Company model
 model Company {
   id              Int        @id @default(autoincrement())
   name            String     @unique
@@ -36,9 +32,10 @@ model Company {
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
   users           User[]     @relation("CompanyUsers")
+  files           File[]     
 }
 
-// user model
+// User model
 model User {
   id          Int      @id @default(autoincrement())
   email       String   @unique
@@ -48,6 +45,21 @@ model User {
   status      String   @default("PENDING") 
   companyId   Int
   company     Company  @relation("CompanyUsers", fields: [companyId], references: [id])
+  files       File[]   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// File model
+model File {
+  id           Int     @id @default(autoincrement())
+  companyId    Int
+  userId       Int 
+  fileName     String
+  filePath     String
+  visibility   String   
+  allowedUsers String[] @default([])
+
+  company      Company  @relation(fields: [companyId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
 }
