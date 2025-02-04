@@ -119,6 +119,42 @@ class UploadController {
             });
         }
     }
+
+    static async fileDeletion(req: Request, res: Response) {
+        try {
+            const { fileId } = req.params;
+            const { userId } = req.body;
+
+            const file = await prisma.file.findUnique({
+                where: {
+                    id: Number(fileId)
+                }
+            });
+
+            if(!file) {
+                return res.status(404).json({ message: 'File not found.' });
+            }
+
+            if (file.userId !== Number(userId)) {
+                return res.status(403).json({ message: 'You are not authorized to delete this file.' });
+              }
+
+              await prisma.file.delete({
+                where: {
+                  id: Number(fileId),
+                },
+              });
+
+
+              res.status(200).json({ message: 'File deleted successfully.' });
+            
+
+
+        } catch (error) {
+            console.error('Error deleting file:', error);
+         res.status(500).json({ message: 'Failed to delete file.' });
+        }
+    }
 }
 
 

@@ -38,6 +38,8 @@ router.post("/upload", upload.single("file"), UploadController.uploadFile);
 // file visibility update
 router.put("/upload/:fileId", UploadController.changeVisibility);
 
+// delete uploaded file
+router.delete("/upload/delete/:fileId",  UploadController.fileDeletion);
 
 
 export default router;
