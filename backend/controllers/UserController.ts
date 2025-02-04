@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import prisma from "../db/db.config.js";
-import jwt from 'jsonwebtoken'
 import vine, { errors } from "@vinejs/vine";
 import { updateUserSchema } from "../validations/authValidation.js";
 import { sendEmail } from "../mail/mail.js";
