@@ -22,6 +22,21 @@ class AdminController {
         return res.status(500).json({ message: "An error occurred while fetching users." });
        }
     }
+
+    // get all files
+    static async getAllFiles(req: Request, res: Response) {
+        try {
+            
+
+            const files = await prisma.file.findMany();
+
+            return res.status(200).json(files);
+            
+        } catch (error) {
+            console.error(error);
+        return res.status(500).json({ message: "Something went wrong" });
+        }
+    }
 }
 
 

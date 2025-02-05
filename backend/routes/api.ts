@@ -41,5 +41,8 @@ router.put("/upload/:fileId", UploadController.changeVisibility);
 // delete uploaded file
 router.delete("/upload/delete/:fileId",  UploadController.fileDeletion);
 
+// get all files
+router.get("/upload/allFiles", authenticate, AdminController.getAllFiles);
+
 
 export default router;
