@@ -49,6 +49,32 @@ class UploadController {
                 return res.status(400).json({ message: "User ID and Company ID are required" });
             }
 
+            // get filesprocessed and plan
+            const company = await prisma.company.findUnique({
+                where: {id: Number(companyId)},
+                select: { filesProcessed: true, subscriptionPlan: true}
+
+            });
+
+            if (!company) {
+                return res.status(404).json({ message: "Company not found" });
+            }
+            
+
+           let { filesProcessed, subscriptionPlan } = company;
+
+           const planLimits: Record<string, number> = {
+            free: 10,
+            basic: 100,
+            premium: 1000
+        };
+
+        if (subscriptionPlan === "PREMIUM" && filesProcessed >= 1000) {
+            console.log(`Extra charge for premium: $${(filesProcessed - 1000) * 0.5}`);
+        } else if (planLimits[subscriptionPlan] !== undefined && filesProcessed >= planLimits[subscriptionPlan]) {
+            return res.status(403).json({ message: "File upload limit reached for your plan." });
+        }
+
             const allowedUsersArray = allowedUsers ? allowedUsers.split(",") : [];
 
             const newFile = await prisma.file.create({
@@ -61,6 +87,13 @@ class UploadController {
                     companyId: parseInt(companyId),
                 }
             });
+
+            await prisma.company.update({
+                where: { id: Number(companyId) },
+                data: { filesProcessed: filesProcessed + 1 }
+            });
+
+            
 
             return res.status(201).json({ message: "File uploaded successfully", file: newFile });
             
