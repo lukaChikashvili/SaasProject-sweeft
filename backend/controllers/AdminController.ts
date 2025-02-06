@@ -37,6 +37,51 @@ class AdminController {
         return res.status(500).json({ message: "Something went wrong" });
         }
     }
+
+
+    static async calculateBilling(req: Request, res: Response) {
+        try {
+            const { id } = req.user!;
+    
+            const company = await prisma.company.findUnique({
+                where: { id },
+                select: {
+                    subscriptionPlan: true,
+                    usersCount: true,
+                    filesProcessed: true,
+                }
+            });
+    
+            if (!company) {
+                return res.status(404).json({ message: "Company not found." });
+            }
+    
+            let totalCost = 0;
+    
+            if (company.subscriptionPlan === "FREE") {
+                totalCost = 0;
+            } else if (company.subscriptionPlan === "BASIC") {
+                totalCost = (company.usersCount - 1) * 5; 
+            } else if (company.subscriptionPlan === "PREMIUM") {
+                totalCost = 300; 
+                if (company.filesProcessed > 1000) {
+                    totalCost += (company.filesProcessed - 1000) * 0.5; 
+                }
+            }
+    
+            return res.status(200).json({ 
+                subscriptionPlan: company.subscriptionPlan,
+                usersCount: company.usersCount,
+                filesProcessed: company.filesProcessed,
+                totalCost: `$${totalCost.toFixed(2)}` 
+            });
+    
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: "An error occurred while calculating billing." });
+        }
+    }
+    
 }
 
 

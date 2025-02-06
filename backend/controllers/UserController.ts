@@ -149,6 +149,7 @@ class UserController {
                     filesProcessed: newFilesProcessed,
                     usersCount: newUsersCount,
                     additionalCost: newAdditionalCost,
+                    subscriptionActivatedAt: new Date()
                 },
                });
 

@@ -44,5 +44,7 @@ router.delete("/upload/delete/:fileId",  UploadController.fileDeletion);
 // get all files
 router.get("/upload/allFiles", authenticate, AdminController.getAllFiles);
 
+router.get('/billing', authenticate, AdminController.calculateBilling);
+
 
 export default router;
