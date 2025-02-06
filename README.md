@@ -63,3 +63,50 @@
 ![Screenshot 2025-02-06 171044](https://github.com/user-attachments/assets/9cefd23b-de29-4c4b-b98d-0f1cc751efc5)
 
 
+# 7) Delete users
+
+![Screenshot 2025-02-06 183144](https://github.com/user-attachments/assets/325068aa-0a56-4861-9afd-a873fa4dda1f)
+
+
+# 8) Get list of users
+
+### company can see list of employees
+
+
+![Screenshot 2025-02-06 183416](https://github.com/user-attachments/assets/01629eaa-4a6d-4211-9c2d-c1529da65053)
+
+
+# 9) Upload files
+
+### company employees can upload only csv, xls, xlsx files
+
+
+
+
+![Screenshot 2025-02-06 183808](https://github.com/user-attachments/assets/85ec8c2b-118a-49e2-a652-e0923999ddb3)
+
+
+# 10) Change visibility
+
+### employees can choose file visibility - public or private
+
+![Screenshot 2025-02-06 184310](https://github.com/user-attachments/assets/03e87449-e0f4-4384-864c-fc9e1f38f3e9)
+
+
+# 11)  File deletion
+
+### employees can delete their uploaded files
+
+![Screenshot 2025-02-06 184336](https://github.com/user-attachments/assets/1bbdf50d-232f-4ba0-9ab9-4f38599f1eb8)
+
+
+# 12) Get all files
+
+### company can get list of all uploaded files
+
+
+![Screenshot 2025-02-06 184749](https://github.com/user-attachments/assets/c318884c-e970-428d-9f4f-33dedce174d0)
+
+
+
+
