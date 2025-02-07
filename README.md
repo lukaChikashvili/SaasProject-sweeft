@@ -108,5 +108,11 @@
 ![Screenshot 2025-02-06 184749](https://github.com/user-attachments/assets/c318884c-e970-428d-9f4f-33dedce174d0)
 
 
+# 13) Check billing
+
+### company can see current billing
+
+
+![Screenshot 2025-02-07 020953](https://github.com/user-attachments/assets/b5d571b0-5bcb-4620-b9a7-c2fbdd3f12ee)
 
 
